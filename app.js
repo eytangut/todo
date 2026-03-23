@@ -559,7 +559,7 @@ function renderListsGrid() {
       <div class="card-actions">
         <button class="card-action-btn delete-list-card-btn" title="Delete list" aria-label="Delete ${escHtml(list.name)}">✕</button>
       </div>
-      <span class="card-emoji" aria-hidden="true">${list.emoji}</span>
+      <span class="card-emoji" aria-hidden="true">${escHtml(list.emoji)}</span>
       <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.3rem">
         <div class="card-name">${escHtml(list.name)}</div>
         ${allDone && total > 0 ? '<span class="card-done-badge">✦ All done!</span>' : ''}
