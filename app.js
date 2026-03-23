@@ -824,31 +824,35 @@ function initProgressBar(card, task, theme) {
     updateListHeaderStats();
   }
 
-  // Drag thumb
+  // Drag thumb (use Pointer Events with capture to avoid global listeners)
   let dragging = false;
-  thumb.addEventListener('mousedown', e => {
+  thumb.addEventListener('pointerdown', e => {
     dragging = true;
+    thumb.setPointerCapture(e.pointerId);
     e.preventDefault();
   });
-  thumb.addEventListener('touchstart', e => {
-    dragging = true;
-    e.preventDefault();
-  }, { passive: false });
-
-  document.addEventListener('mousemove', e => {
+  thumb.addEventListener('pointermove', e => {
     if (!dragging) return;
     const rect = track.getBoundingClientRect();
     const ratio = (e.clientX - rect.left) / rect.width;
     setProgress(ratio * 100);
   });
-  document.addEventListener('touchmove', e => {
-    if (!dragging) return;
-    const rect = track.getBoundingClientRect();
-    const ratio = (e.touches[0].clientX - rect.left) / rect.width;
-    setProgress(ratio * 100);
-  }, { passive: true });
-  document.addEventListener('mouseup',  () => { dragging = false; });
-  document.addEventListener('touchend', () => { dragging = false; });
+  thumb.addEventListener('pointerup', e => {
+    dragging = false;
+    try {
+      thumb.releasePointerCapture(e.pointerId);
+    } catch (_) {
+      // ignore if capture was not set
+    }
+  });
+  thumb.addEventListener('pointercancel', e => {
+    dragging = false;
+    try {
+      thumb.releasePointerCapture(e.pointerId);
+    } catch (_) {
+      // ignore if capture was not set
+    }
+  });
 
   // Click on track
   track.addEventListener('click', e => {
