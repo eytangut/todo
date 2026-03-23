@@ -24,6 +24,11 @@ const COLOR_THEMES = [
 
 const STORAGE_KEY = 'todoverse_v1';
 
+// Particle tuning constants
+const PARTICLE_AREA_DIVISOR = 15000;
+const PARTICLE_MAX_COUNT    = 80;
+const PARTICLE_LINK_DIST    = 130;
+
 // ================================================================
 // STATE
 // ================================================================
@@ -66,6 +71,9 @@ function loadState() {
 // ================================================================
 
 function uid() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
@@ -191,7 +199,7 @@ resizeBgCanvas();
 window.addEventListener('resize', () => { resizeBgCanvas(); initBgParticles(); });
 
 function initBgParticles() {
-  const count = Math.min(Math.floor(window.innerWidth * window.innerHeight / 15000), 80);
+  const count = Math.min(Math.floor(window.innerWidth * window.innerHeight / PARTICLE_AREA_DIVISOR), PARTICLE_MAX_COUNT);
   bgParticles = Array.from({ length: count }, () => ({
     x: Math.random() * bgCanvas.width,
     y: Math.random() * bgCanvas.height,
@@ -219,9 +227,9 @@ function tickBg() {
       const dx = bgParticles[i].x - bgParticles[j].x;
       const dy = bgParticles[i].y - bgParticles[j].y;
       const dist = Math.sqrt(dx*dx + dy*dy);
-      if (dist < 130) {
+      if (dist < PARTICLE_LINK_DIST) {
         bgCtx.beginPath();
-        bgCtx.strokeStyle = `rgba(124,58,237,${0.15 * (1 - dist/130)})`;
+        bgCtx.strokeStyle = `rgba(124,58,237,${0.15 * (1 - dist/PARTICLE_LINK_DIST)})`;
         bgCtx.lineWidth = 0.5;
         bgCtx.moveTo(bgParticles[i].x, bgParticles[i].y);
         bgCtx.lineTo(bgParticles[j].x, bgParticles[j].y);
