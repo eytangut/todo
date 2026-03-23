@@ -195,16 +195,22 @@ function initBgParticles() {
   bgParticles = Array.from({ length: count }, () => ({
     x: Math.random() * bgCanvas.width,
     y: Math.random() * bgCanvas.height,
-    r: 0.5 + Math.random() * 1.5,
-    vx: (Math.random() - 0.5) * 0.3,
-    vy: (Math.random() - 0.5) * 0.3,
-    alpha: 0.2 + Math.random() * 0.5,
-    color: ['#7c3aed','#06b6d4','#f43f5e','#a855f7','#10b981'][Math.floor(Math.random()*5)],
+    r: 0.5 + Math.random() * 2,
+    vx: (Math.random() - 0.5) * 0.25,
+    vy: (Math.random() - 0.5) * 0.25,
+    alpha: 0.15 + Math.random() * 0.5,
+    baseAlpha: 0.15 + Math.random() * 0.5,
+    pulseSpeed: 0.01 + Math.random() * 0.02,
+    pulsePhase: Math.random() * Math.PI * 2,
+    color: ['#7c3aed','#06b6d4','#f43f5e','#a855f7','#10b981','#f472b6','#3b82f6'][Math.floor(Math.random()*7)],
   }));
 }
 initBgParticles();
 
+let bgTick = 0;
+
 function tickBg() {
+  bgTick++;
   bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
 
   // draw connection lines between nearby particles
@@ -213,9 +219,9 @@ function tickBg() {
       const dx = bgParticles[i].x - bgParticles[j].x;
       const dy = bgParticles[i].y - bgParticles[j].y;
       const dist = Math.sqrt(dx*dx + dy*dy);
-      if (dist < 120) {
+      if (dist < 130) {
         bgCtx.beginPath();
-        bgCtx.strokeStyle = `rgba(124,58,237,${0.12 * (1 - dist/120)})`;
+        bgCtx.strokeStyle = `rgba(124,58,237,${0.15 * (1 - dist/130)})`;
         bgCtx.lineWidth = 0.5;
         bgCtx.moveTo(bgParticles[i].x, bgParticles[i].y);
         bgCtx.lineTo(bgParticles[j].x, bgParticles[j].y);
@@ -230,12 +236,15 @@ function tickBg() {
     const dx = p.x - mouseX;
     const dy = p.y - mouseY;
     const dist = Math.sqrt(dx*dx + dy*dy);
-    if (dist < 100) {
-      p.vx += (dx / dist) * 0.05;
-      p.vy += (dy / dist) * 0.05;
+    if (dist < 120) {
+      p.vx += (dx / dist) * 0.06;
+      p.vy += (dy / dist) * 0.06;
     }
-    p.vx = clamp(p.vx, -1.5, 1.5);
-    p.vy = clamp(p.vy, -1.5, 1.5);
+    p.vx = clamp(p.vx, -1.8, 1.8);
+    p.vy = clamp(p.vy, -1.8, 1.8);
+    // gentle drag
+    p.vx *= 0.98;
+    p.vy *= 0.98;
     p.x += p.vx;
     p.y += p.vy;
     if (p.x < 0) p.x = bgCanvas.width;
@@ -243,6 +252,20 @@ function tickBg() {
     if (p.y < 0) p.y = bgCanvas.height;
     if (p.y > bgCanvas.height) p.y = 0;
 
+    // pulsing alpha
+    p.alpha = p.baseAlpha + Math.sin(bgTick * p.pulseSpeed + p.pulsePhase) * 0.2;
+
+    // draw glow
+    const gradient = bgCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4);
+    gradient.addColorStop(0, p.color);
+    gradient.addColorStop(1, 'transparent');
+    bgCtx.beginPath();
+    bgCtx.arc(p.x, p.y, p.r * 4, 0, Math.PI * 2);
+    bgCtx.fillStyle = gradient;
+    bgCtx.globalAlpha = p.alpha * 0.3;
+    bgCtx.fill();
+
+    // draw core dot
     bgCtx.beginPath();
     bgCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
     bgCtx.fillStyle = p.color;
@@ -256,17 +279,118 @@ function tickBg() {
 tickBg();
 
 // ================================================================
-// CURSOR GLOW
+// CURSOR GLOW + MOUSE TRAIL
 // ================================================================
 
 const cursorGlow = document.getElementById('cursor-glow');
+let lastTrailTime = 0;
+const trailColors = ['#7c3aed','#a855f7','#06b6d4','#f43f5e','#10b981','#f472b6'];
+let trailColorIdx = 0;
 
 window.addEventListener('mousemove', e => {
   mouseX = e.clientX;
   mouseY = e.clientY;
   cursorGlow.style.left = e.clientX + 'px';
   cursorGlow.style.top  = e.clientY + 'px';
+
+  // Mouse trail particles
+  const now = Date.now();
+  if (now - lastTrailTime > 40) {
+    lastTrailTime = now;
+    const dot = document.createElement('div');
+    dot.className = 'cursor-trail';
+    dot.style.left = e.clientX + 'px';
+    dot.style.top  = e.clientY + 'px';
+    dot.style.background = trailColors[trailColorIdx % trailColors.length];
+    trailColorIdx++;
+    document.body.appendChild(dot);
+    dot.addEventListener('animationend', () => dot.remove(), { once: true });
+  }
 });
+
+// ================================================================
+// SHOOTING STARS
+// ================================================================
+
+function spawnComet() {
+  const comet = document.createElement('div');
+  comet.className = 'comet';
+  const startY = Math.random() * window.innerHeight * 0.6;
+  const startX = Math.random() * window.innerWidth * 0.3;
+  comet.style.top  = startY + 'px';
+  comet.style.left = startX + 'px';
+  comet.style.transform = `rotate(${20 + Math.random() * 30}deg)`;
+  comet.style.opacity = (0.4 + Math.random() * 0.4).toString();
+  document.body.appendChild(comet);
+  comet.addEventListener('animationend', () => comet.remove(), { once: true });
+}
+
+// Spawn a comet every 6-14 seconds
+(function scheduleCometLoop() {
+  spawnComet();
+  setTimeout(scheduleCometLoop, 6000 + Math.random() * 8000);
+})();
+
+// ================================================================
+// SPARKLE BURST (on click anywhere)
+// ================================================================
+
+const SPARKLE_CHARS = ['✦','★','✸','✺','✻','✼','❋','✿'];
+
+function spawnSparkles(x, y, count = 6) {
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    s.textContent = SPARKLE_CHARS[Math.floor(Math.random() * SPARKLE_CHARS.length)];
+    const angle = (i / count) * Math.PI * 2;
+    const dist  = 30 + Math.random() * 50;
+    s.style.left = x + 'px';
+    s.style.top  = y + 'px';
+    s.style.color = trailColors[Math.floor(Math.random() * trailColors.length)];
+    s.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+    s.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+    s.style.fontSize = (0.7 + Math.random() * 0.6) + 'rem';
+    s.style.animationDuration = (0.5 + Math.random() * 0.5) + 's';
+    document.body.appendChild(s);
+    s.addEventListener('animationend', () => s.remove(), { once: true });
+  }
+}
+
+document.addEventListener('click', e => {
+  // Spawn sparkles on all clicks
+  spawnSparkles(e.clientX, e.clientY, 5);
+});
+
+// ================================================================
+// SCREEN-WIDE RIPPLE ON TASK COMPLETE
+// ================================================================
+
+function screenRipple(x, y, color) {
+  const ripple = document.createElement('div');
+  ripple.className = 'screen-ripple';
+  ripple.style.left = x + 'px';
+  ripple.style.top  = y + 'px';
+  ripple.style.width  = '60px';
+  ripple.style.height = '60px';
+  ripple.style.border = `2px solid ${color}`;
+  ripple.style.boxShadow = `0 0 20px ${color}`;
+  document.body.appendChild(ripple);
+  ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
+}
+
+// ================================================================
+// SCROLL PROGRESS BAR
+// ================================================================
+
+const scrollProgressBar = document.createElement('div');
+scrollProgressBar.id = 'scroll-progress';
+document.body.prepend(scrollProgressBar);
+
+window.addEventListener('scroll', () => {
+  const total = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = total > 0 ? (window.scrollY / total) * 100 : 0;
+  scrollProgressBar.style.width = pct + '%';
+}, { passive: true });
 
 // ================================================================
 // 3-D CARD TILT EFFECT
@@ -403,14 +527,35 @@ function renderListsGrid() {
     card.style.setProperty('--card-to',   theme.to);
     card.style.animationDelay = `${idx * 0.07}s`;
 
+    // Build CSS floating card particles
+    const particlesHTML = Array.from({length: 6}, (_, i) => {
+      const angle  = (i / 6) * Math.PI * 2;
+      const tx = Math.cos(angle) * (30 + Math.random() * 40) + 'px';
+      const ty = Math.sin(angle) * (30 + Math.random() * 40) + 'px';
+      return `<div class="card-particle" style="
+        left:${20 + Math.random() * 60}%;
+        top:${20 + Math.random() * 60}%;
+        background:${theme.from};
+        --tx:${tx};--ty:${ty};
+        --dur:${2 + Math.random() * 2}s;
+        --delay:${-Math.random() * 2}s;
+      "></div>`;
+    }).join('');
+
+    const allDone = total > 0 && done === total;
+
     card.innerHTML = `
       <div class="card-accent"></div>
       <div class="card-glow"></div>
+      <div class="card-particles">${particlesHTML}</div>
       <div class="card-actions">
-        <button class="card-action-btn delete-list-card-btn" title="Delete list" aria-label="Delete ${list.name}">✕</button>
+        <button class="card-action-btn delete-list-card-btn" title="Delete list" aria-label="Delete ${escHtml(list.name)}">✕</button>
       </div>
       <span class="card-emoji" aria-hidden="true">${list.emoji}</span>
-      <div class="card-name">${escHtml(list.name)}</div>
+      <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.3rem">
+        <div class="card-name">${escHtml(list.name)}</div>
+        ${allDone && total > 0 ? '<span class="card-done-badge">✦ All done!</span>' : ''}
+      </div>
       <div class="card-meta">${total} task${total !== 1 ? 's' : ''} · ${done} done</div>
       <div class="card-progress-wrap">
         <div class="card-progress-track">
@@ -749,7 +894,24 @@ function onTaskComplete(cardEl, taskId) {
   const rect = cardEl.getBoundingClientRect();
   const cx = rect.left + rect.width / 2;
   const cy = rect.top  + rect.height / 2;
-  launchConfetti(cx, cy, 50);
+
+  // Big confetti burst
+  launchConfetti(cx, cy, 80);
+
+  // Screen-wide ripple
+  const list = getCurrentList();
+  const theme = list ? getTheme(list.color) : COLOR_THEMES[0];
+  screenRipple(cx, cy, theme.from);
+
+  // Sparkle burst
+  spawnSparkles(cx, cy, 10);
+
+  // Extra confetti from corners (fun!)
+  setTimeout(() => launchConfetti(0,                    0,                    15), 100);
+  setTimeout(() => launchConfetti(window.innerWidth,    0,                    15), 200);
+  setTimeout(() => launchConfetti(0,                    window.innerHeight,   15), 150);
+  setTimeout(() => launchConfetti(window.innerWidth,    window.innerHeight,   15), 250);
+
   showToast('Task completed! 🎉', 'success', '🎊');
 }
 
@@ -1162,7 +1324,32 @@ function boot() {
     [21, 24, 'Good night 🌙'],
   ];
   const g = greetings.find(([s, e]) => hour >= s && hour < e);
-  if (g) el('greeting-title').textContent = g[2];
+  if (g) {
+    el('greeting-title').textContent = g[2];
+    el('greeting-title').setAttribute('data-text', g[2]);
+  }
+
+  // Type-writer effect on sub-greeting
+  const subEl = document.querySelector('.greeting-sub');
+  if (subEl) {
+    const original = subEl.textContent;
+    subEl.textContent = '';
+    let i = 0;
+    function typeWriter() {
+      if (i <= original.length) {
+        subEl.textContent = original.slice(0, i);
+        i++;
+        setTimeout(typeWriter, 30);
+      }
+    }
+    setTimeout(typeWriter, 500);
+  }
+
+  // Initial welcome sparkles
+  setTimeout(() => {
+    spawnSparkles(window.innerWidth / 2, window.innerHeight / 3, 12);
+    spawnComet();
+  }, 800);
 }
 
 document.addEventListener('DOMContentLoaded', boot);

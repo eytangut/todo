@@ -74,6 +74,71 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: rgba(124, 58, 237, 0.8); }
 
 /* ================================================================
+   PROGRESS BAR (page-top)
+   ================================================================ */
+#scroll-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  width: 0%;
+  background: linear-gradient(90deg, #7c3aed, #06b6d4, #f43f5e, #10b981);
+  background-size: 200% 100%;
+  z-index: 9000;
+  transition: width 0.1s;
+  animation: rainbowShift 3s linear infinite;
+  box-shadow: 0 0 8px rgba(124,58,237,0.8);
+}
+
+/* ================================================================
+   CURSOR TRAIL
+   ================================================================ */
+.cursor-trail {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  animation: trailFade 0.8s ease-out forwards;
+}
+@keyframes trailFade {
+  0%   { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0;   transform: translate(-50%, -50%) scale(0); }
+}
+
+/* ================================================================
+   SPARKLE ELEMENTS
+   ================================================================ */
+.sparkle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9990;
+  animation: sparklePop 0.8s ease-out forwards;
+  font-size: 1rem;
+}
+@keyframes sparklePop {
+  0%   { opacity: 1;   transform: translate(0, 0)    scale(0.5) rotate(0deg); }
+  50%  { opacity: 1;   transform: translate(var(--dx), var(--dy)) scale(1.2) rotate(180deg); }
+  100% { opacity: 0;   transform: translate(calc(var(--dx)*1.5), calc(var(--dy)*1.5)) scale(0) rotate(360deg); }
+}
+
+/* ================================================================
+   FULL SCREEN RIPPLE
+   ================================================================ */
+.screen-ripple {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9980;
+  transform: translate(-50%, -50%) scale(0);
+  animation: screenRippleAnim 0.8s cubic-bezier(0,0.5,0.5,1) forwards;
+}
+@keyframes screenRippleAnim {
+  to { transform: translate(-50%, -50%) scale(40); opacity: 0; }
+}
+
+/* ================================================================
    BACKGROUND CANVAS
    ================================================================ */
 #bg-canvas {
@@ -129,6 +194,14 @@ body {
   background: radial-gradient(circle, #10b981 0%, transparent 70%);
   animation-duration: 25s;
   animation-delay: -12s;
+}
+.aurora-blob.a5 {
+  width: 450px; height: 450px;
+  top: 40%; left: 40%;
+  background: radial-gradient(circle, #a855f7 0%, transparent 70%);
+  animation-duration: 32s;
+  animation-delay: -6s;
+  opacity: 0.1;
 }
 
 @keyframes auroraFloat {
@@ -590,30 +663,43 @@ body {
 
 .list-card:hover::before { opacity: 1; }
 
-/* Shimmer overlay */
+/* Holographic shimmer overlay */
 .list-card::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.05) 50%, transparent 60%);
+  background:
+    linear-gradient(
+      105deg,
+      transparent 20%,
+      rgba(124,58,237,0.04) 30%,
+      rgba(6,182,212,0.06) 40%,
+      rgba(244,114,182,0.04) 50%,
+      rgba(16,185,129,0.04) 60%,
+      transparent 70%
+    );
   opacity: 0;
-  transform: translateX(-100%);
-  transition: opacity var(--t-fast);
   pointer-events: none;
+  transition: opacity var(--t-fast);
+  background-size: 200% 100%;
+  animation: holoShift 3s ease-in-out infinite;
 }
 .list-card:hover::after {
   opacity: 1;
-  transform: translateX(100%);
-  transition: transform 0.6s ease, opacity 0.1s;
+}
+@keyframes holoShift {
+  0%,100% { background-position: 0% 0%;   }
+  50%      { background-position: 100% 0%; }
 }
 
 .list-card:hover {
-  transform: translateY(-6px) scale(1.02);
+  transform: translateY(-8px) scale(1.025);
   border-color: rgba(255,255,255,0.15);
   box-shadow:
-    0 20px 60px rgba(0,0,0,0.4),
+    0 30px 80px rgba(0,0,0,0.5),
     0 0 0 1px var(--border-hi),
-    inset 0 1px 0 rgba(255,255,255,0.1);
+    0 0 60px -20px var(--card-from),
+    inset 0 1px 0 rgba(255,255,255,0.12);
 }
 
 /* Card colour accent line */
@@ -1680,4 +1766,410 @@ body {
   .type-toggle { order: 3; width: 100%; }
   .task-input  { order: 1; }
   .add-task-btn { order: 2; }
+}
+
+/* ================================================================
+   RAINBOW SHIFT (reusable)
+   ================================================================ */
+@keyframes rainbowShift {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+
+/* ================================================================
+   COMET / SHOOTING STAR (background decorative)
+   ================================================================ */
+.comet {
+  position: fixed;
+  width: 120px;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  animation: cometFly 1.5s ease-out forwards;
+}
+@keyframes cometFly {
+  from { opacity: 0.9; transform: translateX(0); }
+  to   { opacity: 0;   transform: translateX(600px) translateY(200px); }
+}
+
+/* ================================================================
+   MAGNETIC BUTTON GLOW
+   ================================================================ */
+.btn-primary,
+.btn-danger {
+  background-size: 200% 200%;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #6d28d9, #7c3aed, #a855f7, #c084fc);
+  background-size: 200% 200%;
+  animation: gradientMorph 2s ease infinite;
+}
+.btn-danger:hover {
+  animation: gradientMorph 2s ease infinite;
+}
+@keyframes gradientMorph {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+
+/* ================================================================
+   TASK CARD HOVER GLOW (via existing accent element)
+   ================================================================ */
+
+/* ================================================================
+   TASK CARD INNER GLOW
+   ================================================================ */
+.task-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: radial-gradient(
+    ellipse 60% 60% at 0% 50%,
+    rgba(124,58,237,0.05) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity var(--t-norm);
+  pointer-events: none;
+}
+.task-card:hover::after {
+  opacity: 1;
+}
+
+/* ================================================================
+   FLOATING PARTICLES ON CARDS (CSS only)
+   ================================================================ */
+.card-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 20px;
+  opacity: 0;
+  transition: opacity var(--t-slow);
+}
+.list-card:hover .card-particles { opacity: 1; }
+
+.card-particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--card-from);
+  animation: particleDrift var(--dur, 3s) ease-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes particleDrift {
+  0%   { transform: translate(0,    0) scale(1);   opacity: 0.8; }
+  100% { transform: translate(var(--tx, 20px), var(--ty, -40px)) scale(0); opacity: 0; }
+}
+
+/* ================================================================
+   NEON TEXT FOR LOGO (enhanced)
+   ================================================================ */
+.logo-text {
+  text-shadow:
+    0 0 10px rgba(168,85,247,0.3),
+    0 0 30px rgba(168,85,247,0.1);
+  transition: text-shadow var(--t-norm);
+}
+.logo:hover .logo-text {
+  text-shadow:
+    0 0 10px rgba(168,85,247,0.6),
+    0 0 30px rgba(168,85,247,0.4),
+    0 0 60px rgba(168,85,247,0.2);
+}
+
+/* ================================================================
+   HEADER PULSE UNDERLINE (list view)
+   ================================================================ */
+.list-header-title::after {
+  content: '';
+  display: block;
+  height: 2px;
+  margin-top: 2px;
+  background: linear-gradient(90deg, var(--card-from, #7c3aed), var(--card-to, #a855f7), transparent);
+  border-radius: 1px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s var(--t-spring);
+}
+.list-header:hover .list-header-title::after { transform: scaleX(1); }
+
+/* ================================================================
+   WAVE PROGRESS BAR ANIMATION
+   ================================================================ */
+.progress-fill {
+  position: relative;
+  overflow: hidden;
+}
+.progress-fill::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -100%;
+  width: 60%;
+  height: 200%;
+  background: rgba(255,255,255,0.25);
+  transform: skewX(-20deg);
+  animation: progressWave 2.5s ease-in-out infinite;
+}
+@keyframes progressWave {
+  0%   { left: -100%; opacity: 0; }
+  20%  { opacity: 1; }
+  100% { left: 200%; opacity: 0; }
+}
+
+/* ================================================================
+   COMPLETION RING GLOW
+   ================================================================ */
+.ring-fill {
+  transition:
+    stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+    stroke 0.5s;
+  filter: drop-shadow(0 0 6px var(--card-from, #7c3aed));
+}
+
+/* ================================================================
+   EMOJI OPTION MEGA HOVER
+   ================================================================ */
+.emoji-option:hover {
+  border-color: var(--border-hi);
+  transform: scale(1.3) rotate(-8deg) translateY(-4px);
+  background: var(--glass-bg-hi);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+/* ================================================================
+   CHECKBOX PULSE ON COMPLETE
+   ================================================================ */
+.task-check input:checked ~ .task-check-box::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 10px;
+  border: 2px solid #10b981;
+  opacity: 0;
+  animation: checkRingPulse 0.6s ease-out forwards;
+}
+@keyframes checkRingPulse {
+  0%   { inset: -2px; opacity: 0.8; }
+  100% { inset: -12px; opacity: 0; }
+}
+.task-check-box { position: relative; }
+
+/* ================================================================
+   STATS NUMBER GLOW
+   ================================================================ */
+.stat-number {
+  filter: drop-shadow(0 0 8px rgba(124,58,237,0.4));
+}
+
+/* ================================================================
+   MODAL NEON TOP BORDER
+   ================================================================ */
+.modal::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--purple-light), transparent);
+  opacity: 0.6;
+}
+
+/* ================================================================
+   TASK CARD STAGGER (extended)
+   ================================================================ */
+.task-card:nth-child(1)  { animation-delay: 0.04s; }
+.task-card:nth-child(2)  { animation-delay: 0.08s; }
+.task-card:nth-child(3)  { animation-delay: 0.12s; }
+.task-card:nth-child(4)  { animation-delay: 0.16s; }
+.task-card:nth-child(5)  { animation-delay: 0.20s; }
+.task-card:nth-child(6)  { animation-delay: 0.24s; }
+.task-card:nth-child(7)  { animation-delay: 0.28s; }
+.task-card:nth-child(8)  { animation-delay: 0.32s; }
+.task-card:nth-child(9)  { animation-delay: 0.36s; }
+.task-card:nth-child(10) { animation-delay: 0.40s; }
+
+/* ================================================================
+   "COMPLETED" BADGE on card
+   ================================================================ */
+.card-done-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #10b981;
+  margin-left: auto;
+  animation: badgePop var(--t-spring) both;
+}
+@keyframes badgePop {
+  from { opacity: 0; transform: scale(0) rotate(-20deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0deg);  }
+}
+
+/* ================================================================
+   GREETING TITLE GLITCH
+   ================================================================ */
+.greeting-title {
+  position: relative;
+}
+.greeting-title::before,
+.greeting-title::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0; left: 0;
+  background: linear-gradient(135deg, #e2e8f0, #a855f7 50%, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  opacity: 0;
+  pointer-events: none;
+}
+.greeting-title:hover::before {
+  opacity: 0.6;
+  animation: glitchTop 0.4s steps(2) both;
+}
+.greeting-title:hover::after {
+  opacity: 0.4;
+  animation: glitchBot 0.4s steps(2) both;
+}
+@keyframes glitchTop {
+  0%   { clip-path: inset(0 0 90% 0); transform: translateX(-3px); }
+  25%  { clip-path: inset(10% 0 70% 0); transform: translateX(3px); }
+  50%  { clip-path: inset(30% 0 50% 0); transform: translateX(-2px); }
+  100% { clip-path: inset(0 0 90% 0); transform: translateX(0); opacity: 0; }
+}
+@keyframes glitchBot {
+  0%   { clip-path: inset(80% 0 0 0); transform: translateX(3px); }
+  25%  { clip-path: inset(60% 0 20% 0); transform: translateX(-3px); }
+  50%  { clip-path: inset(40% 0 40% 0); transform: translateX(2px); }
+  100% { clip-path: inset(80% 0 0 0); transform: translateX(0); opacity: 0; }
+}
+
+/* ================================================================
+   SCAN LINE ANIMATION (list header already has it, body-level)
+   ================================================================ */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: rgba(124,58,237,0.15);
+  pointer-events: none;
+  z-index: 5;
+  animation: bodyScanLine 6s ease-in-out infinite;
+}
+@keyframes bodyScanLine {
+  0%   { top: 0%;   opacity: 0; }
+  5%   { opacity: 1; }
+  95%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* ================================================================
+   PROGRESS MILESTONES (visual tick marks)
+   ================================================================ */
+.progress-track::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 25%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 12px;
+  background: rgba(255,255,255,0.15);
+  pointer-events: none;
+}
+.progress-track::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 75%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 12px;
+  background: rgba(255,255,255,0.15);
+  pointer-events: none;
+}
+
+/* ================================================================
+   TOAST ICON SPIN ON SUCCESS
+   ================================================================ */
+.toast-success .toast-icon { animation: iconSpinIn 0.5s var(--t-spring) both; }
+@keyframes iconSpinIn {
+  from { transform: rotate(-180deg) scale(0); }
+  to   { transform: rotate(0deg) scale(1); }
+}
+
+/* ================================================================
+   EXPORT/IMPORT BUTTON ICONS ANIMATION
+   ================================================================ */
+#export-btn:hover svg { animation: iconBounce 0.4s var(--t-spring) both; }
+#import-btn:hover svg { animation: iconBounce 0.4s var(--t-spring) both; }
+@keyframes iconBounce {
+  0%   { transform: translateY(0); }
+  40%  { transform: translateY(-4px); }
+  70%  { transform: translateY(2px); }
+  100% { transform: translateY(0); }
+}
+
+/* ================================================================
+   CARD TITLE GRADIENT TEXT
+   ================================================================ */
+.card-name {
+  background: linear-gradient(135deg, var(--text) 60%, rgba(255,255,255,0.7));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: all var(--t-norm);
+}
+.list-card:hover .card-name {
+  background: linear-gradient(135deg, white, var(--card-to));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* ================================================================
+   BACK BUTTON ANIMATED ARROW
+   ================================================================ */
+.back-btn svg {
+  transition: transform var(--t-spring);
+}
+.back-btn:hover svg { transform: translateX(-4px); }
+
+/* ================================================================
+   INPUT FOCUS GLOW
+   ================================================================ */
+.modal-input:focus {
+  animation: inputGlowPulse 2s ease-in-out infinite;
+}
+@keyframes inputGlowPulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(124,58,237,0.10); }
+  50%       { box-shadow: 0 0 0 5px rgba(124,58,237,0.20); }
+}
+
+/* ================================================================
+   ADD TASK BUTTON ROTATE ON HOVER (enhanced)
+   ================================================================ */
+.add-task-btn:hover {
+  transform: scale(1.15) rotate(90deg);
+  box-shadow: 0 0 20px rgba(124,58,237,0.6), 0 0 40px rgba(168,85,247,0.2);
+}
+
+/* ================================================================
+   RESPONSIVE ADDITIONS
+   ================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
