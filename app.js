@@ -1198,6 +1198,7 @@ function importJSON(file) {
       for (const list of lists) {
         if (!existingIds.has(list.id)) {
           state.lists.push(list);
+          existingIds.add(list.id);
           added++;
         }
       }
