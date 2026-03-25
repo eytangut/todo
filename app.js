@@ -890,7 +890,28 @@ function toggleTaskComplete(taskId, checked, cardEl) {
   const task = list.tasks.find(t => t.id === taskId);
   if (!task) return;
 
-  task.completed = checked;
+  if (task.complex) {
+    // For complex tasks, the checkbox drives progress:
+    // checking sets progress to 100 (and triggers completion); unchecking resets progress to 0.
+    const progressWrap = cardEl.querySelector('.complex-progress-wrap');
+    const targetPct = checked ? 100 : 0;
+    task.progress = targetPct;
+    task.completed = checked;
+
+    // Sync the progress bar UI if it exists in this card
+    if (progressWrap) {
+      const fill  = cardEl.querySelector('.progress-fill');
+      const thumb = cardEl.querySelector('.progress-thumb');
+      const pctIn = cardEl.querySelector('.pct-input');
+      if (fill)  { fill.style.width = targetPct + '%'; fill.style.background = getProgressColor(targetPct); }
+      if (thumb) { thumb.style.left = targetPct + '%'; thumb.style.setProperty('--thumb-color', getProgressThumbColor(targetPct)); }
+      if (pctIn) { pctIn.value = targetPct; }
+      if (fill)  { fill.classList.toggle('neon-complete', targetPct === 100); }
+    }
+  } else {
+    task.completed = checked;
+  }
+
   if (checked) {
     cardEl.classList.add('completed');
     onTaskComplete(cardEl, taskId);
