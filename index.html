@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TodoVerse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ── Background layer ── -->
+  <canvas id="bg-canvas"></canvas>
+
+  <div class="aurora" aria-hidden="true">
+    <div class="aurora-blob a1"></div>
+    <div class="aurora-blob a2"></div>
+    <div class="aurora-blob a3"></div>
+    <div class="aurora-blob a4"></div>
+    <div class="aurora-blob a5"></div>
+  </div>
+
+  <div class="grid-overlay" aria-hidden="true"></div>
+
+  <!-- Cursor glow -->
+  <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
+
+  <!-- Confetti / particle overlay -->
+  <canvas id="confetti-canvas" aria-hidden="true"></canvas>
+
+  <!-- Toast container -->
+  <div id="toast-container" aria-live="polite"></div>
+
+  <!-- ═══════════════════════════════════════════
+       MAIN APP
+  ═══════════════════════════════════════════ -->
+  <div id="app">
+
+    <!-- ── HOME VIEW ── -->
+    <section id="home-view" class="view active" aria-label="Dashboard">
+
+      <header class="home-header">
+        <div class="logo" aria-label="TodoVerse">
+          <span class="logo-star" aria-hidden="true">✦</span>
+          <span class="logo-text">TodoVerse</span>
+          <span class="logo-badge">BETA</span>
+        </div>
+        <nav class="header-actions" aria-label="Header actions">
+          <button class="icon-btn" id="import-btn" title="Import from JSON" aria-label="Import from JSON">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </button>
+          <button class="icon-btn" id="export-btn" title="Export to JSON" aria-label="Export to JSON">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </button>
+          <button class="btn-primary glow-btn" id="new-list-btn">
+            <span class="btn-plus">+</span>
+            <span>New List</span>
+          </button>
+        </nav>
+      </header>
+
+      <main class="dashboard-main">
+        <div class="greeting-block">
+          <h1 class="greeting-title" id="greeting-title">Your Universe</h1>
+          <p class="greeting-sub">Organize your world, one task at a time</p>
+        </div>
+
+        <div class="dashboard-stats-bar" id="dashboard-stats-bar">
+          <div class="stat-pill" id="stat-lists">
+            <span class="stat-number" id="stat-lists-num">0</span>
+            <span class="stat-label">lists</span>
+          </div>
+          <div class="stat-divider" aria-hidden="true"></div>
+          <div class="stat-pill" id="stat-tasks">
+            <span class="stat-number" id="stat-tasks-num">0</span>
+            <span class="stat-label">tasks</span>
+          </div>
+          <div class="stat-divider" aria-hidden="true"></div>
+          <div class="stat-pill" id="stat-done">
+            <span class="stat-number" id="stat-done-num">0</span>
+            <span class="stat-label">done</span>
+          </div>
+        </div>
+
+        <!-- Lists grid -->
+        <div id="lists-grid" class="lists-grid" role="list" aria-label="Your lists"></div>
+
+        <!-- Empty state -->
+        <div class="empty-state" id="empty-state" aria-hidden="true">
+          <div class="empty-orb" aria-hidden="true">
+            <div class="empty-orb-inner">✦</div>
+          </div>
+          <h2 class="empty-title">The universe awaits</h2>
+          <p class="empty-sub">Create your first list to begin your journey</p>
+          <button class="btn-primary glow-btn empty-cta" id="empty-new-list-btn">Create a List</button>
+        </div>
+      </main>
+    </section>
+
+    <!-- ── LIST VIEW ── -->
+    <section id="list-view" class="view" aria-label="Task list" aria-hidden="true">
+
+      <header class="list-header" id="list-header">
+        <button class="back-btn" id="back-btn" aria-label="Go back to dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          <span>Back</span>
+        </button>
+
+        <div class="list-header-center">
+          <span class="list-header-emoji" id="list-header-emoji" aria-hidden="true"></span>
+          <h1 class="list-header-title" id="list-header-title"></h1>
+        </div>
+
+        <div class="list-header-right">
+          <div class="completion-ring-wrap">
+            <svg class="completion-ring" id="completion-ring" viewBox="0 0 48 48" aria-label="Completion percentage">
+              <circle class="ring-bg" cx="24" cy="24" r="20"/>
+              <circle class="ring-fill" id="ring-fill" cx="24" cy="24" r="20"/>
+            </svg>
+            <span class="ring-pct" id="ring-pct">0%</span>
+          </div>
+          <button class="icon-btn danger-btn" id="delete-list-btn" title="Delete this list" aria-label="Delete this list">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="list-main">
+        <!-- Add task area -->
+        <div class="add-task-panel">
+          <div class="task-input-shell" id="task-input-shell">
+            <input
+              type="text"
+              id="task-input"
+              class="task-input"
+              placeholder="Add a new task…"
+              autocomplete="off"
+              aria-label="New task text"
+            />
+            <div class="type-toggle" role="group" aria-label="Task type">
+              <button class="type-btn active" id="type-simple" data-type="simple">Simple</button>
+              <button class="type-btn" id="type-complex" data-type="complex">
+                <span class="complex-icon" aria-hidden="true">◈</span>
+                Complex
+              </button>
+            </div>
+            <button class="add-task-btn glow-btn" id="add-task-btn" aria-label="Add task">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="filter-bar" role="group" aria-label="Filter tasks">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="active">Active</button>
+          <button class="filter-btn" data-filter="completed">Completed</button>
+          <button class="filter-btn" data-filter="complex">Complex</button>
+        </div>
+
+        <!-- Tasks list -->
+        <div id="tasks-container" class="tasks-container" role="list" aria-label="Tasks"></div>
+
+        <!-- List empty state -->
+        <div class="list-empty" id="list-empty" aria-hidden="true">
+          <div class="list-empty-icon" aria-hidden="true">📋</div>
+          <p>No tasks yet — add one above!</p>
+        </div>
+      </main>
+    </section>
+
+  </div><!-- /#app -->
+
+  <!-- ═══════════════════════════════════════════
+       MODALS
+  ═══════════════════════════════════════════ -->
+
+  <!-- New / Edit List Modal -->
+  <div class="modal-overlay" id="list-modal" role="dialog" aria-modal="true" aria-labelledby="list-modal-title" aria-hidden="true">
+    <div class="modal glass-modal">
+      <button class="modal-close-btn" id="list-modal-close" aria-label="Close">✕</button>
+      <h2 class="modal-title" id="list-modal-title">New List</h2>
+
+      <div class="modal-section">
+        <label class="modal-label">Pick an icon</label>
+        <div class="emoji-grid" id="emoji-grid" role="radiogroup" aria-label="List icon"></div>
+      </div>
+
+      <div class="modal-section">
+        <label class="modal-label" for="list-name-input">Name</label>
+        <input type="text" id="list-name-input" class="modal-input" placeholder="e.g. Work, Shopping, Ideas…" maxlength="40" aria-label="List name" />
+      </div>
+
+      <div class="modal-section">
+        <label class="modal-label">Colour theme</label>
+        <div class="color-grid" id="color-grid" role="radiogroup" aria-label="List colour"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-ghost" id="list-modal-cancel">Cancel</button>
+        <button class="btn-primary glow-btn" id="list-modal-confirm">Create List</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Task Modal -->
+  <div class="modal-overlay" id="task-modal" role="dialog" aria-modal="true" aria-labelledby="task-modal-title" aria-hidden="true">
+    <div class="modal glass-modal">
+      <button class="modal-close-btn" id="task-modal-close" aria-label="Close">✕</button>
+      <h2 class="modal-title" id="task-modal-title">Edit Task</h2>
+
+      <div class="modal-section">
+        <label class="modal-label" for="edit-task-input">Task text</label>
+        <input type="text" id="edit-task-input" class="modal-input" placeholder="Task description…" maxlength="200" aria-label="Edit task text" />
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-ghost" id="task-modal-cancel">Cancel</button>
+        <button class="btn-primary glow-btn" id="task-modal-confirm">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Modal -->
+  <div class="modal-overlay" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" aria-hidden="true">
+    <div class="modal glass-modal confirm-modal">
+      <div class="confirm-icon" aria-hidden="true">⚠️</div>
+      <h2 class="modal-title" id="confirm-modal-title">Delete list?</h2>
+      <p class="confirm-text" id="confirm-modal-text">This action cannot be undone.</p>
+      <div class="modal-footer">
+        <button class="btn-ghost" id="confirm-modal-cancel">Cancel</button>
+        <button class="btn-danger glow-btn" id="confirm-modal-ok">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden file input for import -->
+  <input type="file" id="import-file-input" accept=".json" aria-hidden="true" tabindex="-1" style="display:none" />
+
+  <script src="app.js"></script>
+</body>
+</html>
