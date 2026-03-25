@@ -1429,20 +1429,6 @@ body {
 }
 .progress-thumb:active { cursor: grabbing; transform: translate(-50%, -50%) scale(1.3); }
 
-/* milestone markers */
-.progress-milestones {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 0;
-  margin-top: 0.25rem;
-}
-.milestone-mark {
-  width: 1px;
-  height: 4px;
-  background: rgba(255,255,255,0.2);
-  position: relative;
-}
-
 /* ── Task Actions ── */
 .task-actions {
   display: flex;
