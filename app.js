@@ -215,7 +215,7 @@ function initBgParticles() {
 }
 initBgParticles();
 
-let bgTick = 0;
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function tickBg() {
   bgTick++;
@@ -284,7 +284,7 @@ function tickBg() {
 
   bgRAF = requestAnimationFrame(tickBg);
 }
-tickBg();
+if (!reducedMotion) tickBg();
 
 // ================================================================
 // CURSOR GLOW + MOUSE TRAIL
@@ -303,7 +303,7 @@ window.addEventListener('mousemove', e => {
 
   // Mouse trail particles
   const now = Date.now();
-  if (now - lastTrailTime > 40) {
+  if (!reducedMotion && now - lastTrailTime > 40) {
     lastTrailTime = now;
     const dot = document.createElement('div');
     dot.className = 'cursor-trail';
@@ -333,11 +333,13 @@ function spawnComet() {
   comet.addEventListener('animationend', () => comet.remove(), { once: true });
 }
 
-// Spawn a comet every 6-14 seconds
-(function scheduleCometLoop() {
-  spawnComet();
-  setTimeout(scheduleCometLoop, 6000 + Math.random() * 8000);
-})();
+// Spawn a comet every 6-14 seconds (skipped when prefers-reduced-motion)
+if (!reducedMotion) {
+  (function scheduleCometLoop() {
+    spawnComet();
+    setTimeout(scheduleCometLoop, 6000 + Math.random() * 8000);
+  })();
+}
 
 // ================================================================
 // SPARKLE BURST (on click anywhere)
@@ -1159,19 +1161,45 @@ function openConfirmModal(title, text, onConfirm) {
 // MODAL HELPERS
 // ================================================================
 
+const FOCUSABLE = 'input, button, select, textarea, a[href], [tabindex]:not([tabindex="-1"])';
+let _modalPriorFocus = null;
+let _modalTrapHandler = null;
+
 function openModal(id) {
   const overlay = el(id);
   overlay.classList.add('open');
   overlay.setAttribute('aria-hidden', 'false');
-  // trap focus – find first focusable
-  const focusable = overlay.querySelector('input, button:not([aria-label="Close"])');
-  if (focusable) setTimeout(() => focusable.focus(), 350);
+  _modalPriorFocus = document.activeElement;
+  // Focus first focusable element
+  const focusables = [...overlay.querySelectorAll(FOCUSABLE)].filter(e => !e.disabled);
+  if (focusables.length) setTimeout(() => focusables[0].focus(), 350);
+  // Real focus trap: cycle Tab/Shift+Tab within the modal
+  _modalTrapHandler = e => {
+    if (e.key !== 'Tab') return;
+    const fs = [...overlay.querySelectorAll(FOCUSABLE)].filter(f => !f.disabled);
+    if (!fs.length) return;
+    const first = fs[0], last = fs[fs.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last)  { e.preventDefault(); first.focus(); }
+    }
+  };
+  document.addEventListener('keydown', _modalTrapHandler);
 }
 
 function closeModal(id) {
   const overlay = el(id);
   overlay.classList.remove('open');
   overlay.setAttribute('aria-hidden', 'true');
+  if (_modalTrapHandler) {
+    document.removeEventListener('keydown', _modalTrapHandler);
+    _modalTrapHandler = null;
+  }
+  if (_modalPriorFocus && typeof _modalPriorFocus.focus === 'function') {
+    _modalPriorFocus.focus();
+    _modalPriorFocus = null;
+  }
 }
 
 // close modal on overlay click
