@@ -1177,7 +1177,7 @@ function exportJSON() {
   a.href = url;
   a.download = `todoverse-${Date.now()}.json`;
   a.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 
   document.body.classList.add('flash-export');
   setTimeout(() => document.body.classList.remove('flash-export'), 800);
